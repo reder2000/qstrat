@@ -1,21 +1,19 @@
 from copy import copy
-from typing import Tuple, List
+from typing import List
 
 from pandas import DataFrame
 
 from assets.asset import Asset
-from assets.equity import EquityYFinance
-from assets.zero_coupon import ZeroCouponFake
-from position import Position
 from common import Date
-from rule import Rule, CPPI_simple
+from portfolio.position import Position
+from portfolio.rule import Rule
 
 to_float = lambda x: 0.0 if x is None else x
 
 
 class PortfolioTrack:
     def __init__(self, cash_asset: Asset):
-        self.cash_asset_name = cash_asset.name()
+        self.cash_asset_name = cash_asset.name
         self.dates = []
         self.pv = []
         self.inflows = []
@@ -43,7 +41,7 @@ class PortfolioTrack:
 
     def get(self) -> DataFrame:
         index = self.dates
-        names = [a.name() for a in self.last_position.assets]
+        names = [a.name for a in self.last_position.assets]
         columns = ["pv", "in", "out", "cash"] + [n + "_v" for n in names] + names
         a = []
         n = len(names)
@@ -120,16 +118,3 @@ class Portfolio:
 
     def report(self) -> DataFrame:
         return self.portfolio_track.get()
-
-
-# GLE CCPI
-risky_asset = EquityYFinance("GLE.PA")
-maturity = Date(2025, 1, 5)
-zero_coupon = ZeroCouponFake(0.01, maturity, "long_rate_1")
-rule = CPPI_simple(risky_asset, zero_coupon, maturity, 25, 80.0)
-cash_asset = ZeroCouponFake(0.001, Date(2100, 1, 1), "cash_10_bp")
-start_date = Date(2021, 1, 4)
-portfolio = Portfolio(rule, cash_asset, 100.0, start_date)
-dates = risky_asset.h.index[risky_asset.h.index >= start_date]
-portfolio.compute(dates)
-portfolio.report().to_clipboard()

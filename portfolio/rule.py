@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 
 from assets.asset import Asset
-from position import Position
+from portfolio.position import Position
 from common import Date
 
 
