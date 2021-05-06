@@ -42,7 +42,11 @@ class PortfolioTrack:
     def get(self) -> DataFrame:
         index = self.dates
         names = [a.name for a in self.last_position.assets]
-        columns = ["pv", "in", "out", "cash"] + [n + "_v" for n in names] + names
+        columns = (
+            ["pv", "in", "out", self.cash_asset_name]
+            + [n + "_v" for n in names]
+            + names
+        )
         a = []
         n = len(names)
         for i in range(len(index)):

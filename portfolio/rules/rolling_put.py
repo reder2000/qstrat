@@ -4,24 +4,11 @@ from typing import Tuple
 
 from assets.asset import Asset
 from assets.one_usd import OneUsd
-from common import Date
+from common import Date, indexing_dict
 from portfolio.portfolio import Portfolio
 from portfolio.position import Position
 from portfolio.rule import Rule
 from pricer.option_cube import cboe_calendar_daycount, generate_cube
-
-
-class indexing_dict:
-    def __init__(self):
-        self.d = {}
-
-    def __getitem__(self, v):
-        if not v in self.d:
-            self.d[v] = len(self.d)
-        return self.d[v]
-
-    def __contains__(self, v):
-        return v in self.d
 
 
 class RollingPut(Rule):
@@ -42,7 +29,7 @@ class RollingPut(Rule):
         nb_days = cboe_calendar_daycount(oc.index[0], oc.index[1])
         # notional
         put_notional = pv / (3.5 * nb_days * spot)
-        # strike
+        # find put with strike closest to 90%
         oe = oc.iloc[4]
         target_strike = 0.9 * spot
         i_s = oe.index.get_loc(target_strike, "nearest")
@@ -52,9 +39,8 @@ class RollingPut(Rule):
             d2 = oe.index[i_s] - target_strike
             if math.fabs(d1 - d2) < 1e-8:  # take smaller
                 i_s = i_s - 1
-        # find expiry
         put = oe.iloc[i_s]
-        # return results
+        # return results, adding put if necessary
         shares = copy(previous_position.shares)
         if not put.name in self.assets_dict:
             self.assets.append(put)
