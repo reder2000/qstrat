@@ -6,7 +6,8 @@ from pandas import DataFrame
 from assets.asset import Asset
 from assets.equity import EquityYFinance
 from assets.zero_coupon import ZeroCouponFake
-from position import Date, Position
+from position import Position
+from common import Date
 from rule import Rule, CPPI_simple
 
 to_float = lambda x: 0.0 if x is None else x

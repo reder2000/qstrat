@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 
 from assets.asset import Asset
-from position import Date, Position
+from position import Position
+from common import Date
 
 
 class Rule(ABC):

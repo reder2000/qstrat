@@ -1,11 +1,8 @@
 from copy import copy
 from typing import List
 
-from pandas import Timestamp
-
 from assets.asset import Asset
-
-Date = Timestamp
+from common import Date
 
 
 class Position:

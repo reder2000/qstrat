@@ -3,7 +3,7 @@ import math
 from pandas import Timedelta
 
 from assets.asset import Asset
-from position import Date
+from common import Date
 
 
 class ZeroCouponFake(Asset):

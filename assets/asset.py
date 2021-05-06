@@ -8,12 +8,16 @@ Date = Timestamp
 
 
 class Asset(ABC):
+    def __init__(self, name):
+        self.name = name
+
     @abstractmethod
     def price(self, t: Date) -> float:
-        return 1.0
+        raise NotImplementedError
 
+    @abstractmethod
     def coupon(self, t: Date) -> float:
-        return 0.0
+        raise NotImplementedError
 
     def __getitem__(self, t: Date) -> Tuple[float, float]:
         return [self.price(t), self.coupon(t)]
