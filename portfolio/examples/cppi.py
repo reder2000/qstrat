@@ -2,7 +2,7 @@ from assets.equity import EquityYFinance
 from assets.zero_coupon import ZeroCouponFake
 from common import Date
 from portfolio.portfolio import Portfolio
-from portfolio.rule import CPPI_simple
+from portfolio.rules.cppi_simple import CPPI_simple
 
 
 def gle_cppi():
@@ -15,7 +15,7 @@ def gle_cppi():
     portfolio = Portfolio(rule, cash_asset, 100.0, start_date)
     dates = risky_asset.h.index[risky_asset.h.index >= start_date]
     portfolio.compute(dates)
-    # portfolio.report().to_clipboard()
+    portfolio.report().to_clipboard()
     print(portfolio.report().head())
 
 

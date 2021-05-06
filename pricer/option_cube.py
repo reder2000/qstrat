@@ -1,4 +1,5 @@
 # date X expiries X strikes options dataframe
+import math
 import warnings
 from typing import Dict
 
@@ -8,9 +9,15 @@ from pandas import Timedelta
 from trading_calendars.exchange_calendar_xcbf import XCBFExchangeCalendar
 from xbbg import blp
 
-from assets.vanillas import VanillaOption, vanilla_option_name, VanillaPut
+from assets.vanillas import (
+    VanillaOption,
+    vanilla_option_name,
+    VanillaPut,
+    ImpliedVolConstant,
+)
 from assets.equity import IndexPandasSeries
 from common import Date
+
 
 warnings.simplefilter("ignore")
 
@@ -23,6 +30,12 @@ def cboe_calendar_is_session(a_date):
 cboe_calendar_is_session.calendar = XCBFExchangeCalendar(
     end=trading_calendars.trading_calendar.end_base + pandas.Timedelta(days=3 * 365)
 )
+
+
+def cboe_calendar_daycount(start_date, end_date, include_end_date=False):
+    i_s = cboe_calendar_is_session.calendar.schedule.index.get_loc(start_date)
+    i_e = cboe_calendar_is_session.calendar.schedule.index.get_loc(end_date)
+    return i_e - i_s + (1 if include_end_date else 0)
 
 
 def next_spx_expiry(a_date: Date):
@@ -61,7 +74,7 @@ def generate_n_spx_expiries(month: int, year: int, n: int, freq="Q"):
 
 
 # populate an option cube with flat vol expiries and strikes
-def generate_cube(start_date: Date):
+def generate_cube(start_date: Date, low_pct_range=0.85, up_pct_range=1.15):
     all_options: Dict[str, VanillaOption] = {}
     all_expiries = pandas.DatetimeIndex(generate_n_spx_expiries(3, 2000, 23 * 4))
     if 0:
@@ -77,20 +90,25 @@ def generate_cube(start_date: Date):
     dates_exp_puts = []
     dates = spx_series.index[i0::]
     for d in dates:
-        # get 5 expiries
-        i_e = all_expiries.get_loc(d, "bfill")
-        expiries = [e for e in all_expiries[i_e : i_e + 5]]
+        # get 6 expiries : [previous,next,...]
+        i_e = all_expiries.get_loc(d, "ffill")
+        expiries = [e for e in all_expiries[i_e : i_e + 6]]
         # range of strikes
         atm = spx_series[d]
         atm = round(atm / 5) * 5
-        strikes = [atm + 5 * i for i in range(-10, 10)]
-        exp_puts = []
-        for e in expiries:
+        lower_atm = math.floor(atm * low_pct_range / 5) * 5
+        upper_atm = math.ceil(atm * up_pct_range / 5) * 5
+        i_s, i_e = (lower_atm - atm) // 5, (upper_atm - atm) // 5 + 1
+        strikes = [atm + 5 * i for i in range(i_s, i_e)]
+        exp_puts = [None]  # empty 1st expiry = previous
+        for e in expiries[1:]:
             puts = []
             for s in strikes:
                 name = vanilla_option_name("P", "SPX US", e, s)
                 if not name in all_options:
-                    all_options[name] = VanillaPut(spx_udl, 0.2, e, s, spx_udl, None)
+                    all_options[name] = VanillaPut(
+                        spx_udl, ImpliedVolConstant(0.2), e, s, spx_udl, None
+                    )
                 puts.append(all_options[name])
             exp_puts.append(pandas.Series(puts, strikes))
         dates_exp_puts.append(pandas.Series(exp_puts, expiries))
@@ -102,4 +120,4 @@ if __name__ == "__main__":
     next_spx_expiry(Date(2022, 5, 5))
     next_spx_expiry(Date(2021, 5, 25))
     generate_n_spx_expiries(1, 2021, 10)
-    generate_cube(Date(2021, 4, 1))
+    generate_cube(Date(2021, 4, 1), 0.85, 0.95)

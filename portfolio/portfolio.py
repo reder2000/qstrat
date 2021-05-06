@@ -105,15 +105,15 @@ class Portfolio:
         assert dates[0] == self.start_date
         cash_value = self.start_value - self.current_position.net_value(dates[0])
         self.cash_position = cash_value / self.cash_asset.price(dates[0])
-        self.portfolio_track.add(
-            dates[0],
-            self.start_value,
-            self.current_position,
-            self.start_value,
-            0,
-            cash_value,
-        )
-        for d in dates[1:]:
+        # self.portfolio_track.add(
+        #     dates[0],
+        #     self.start_value,
+        #     self.current_position,
+        #     self.start_value,
+        #     0,
+        #     cash_value,
+        # )
+        for d in dates:
             pv = self.advance_to(d)
 
     def report(self) -> DataFrame:
