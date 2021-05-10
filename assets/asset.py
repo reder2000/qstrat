@@ -2,14 +2,13 @@
 from abc import ABC, abstractmethod
 from typing import Tuple
 
-from pandas import Timestamp
-
-Date = Timestamp
+from common import Date
 
 
 class Asset(ABC):
-    def __init__(self, name):
+    def __init__(self, name, maturity):
         self.name = name
+        self.maturity = maturity or Date(2100, 12, 31)
 
     @abstractmethod
     def price(self, t: Date) -> float:

@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from pandas import Timedelta
 
 from assets.asset import Asset
-from assets.one_usd import OneUsd
 from common import Date
 from pricer.black_scholes import BlsPriceP, BlsPriceC
 
@@ -42,10 +41,9 @@ class VanillaOption(Asset):
         udl_for_exercice=None,
         name=None,
     ):
-        super().__init__(name)
+        super().__init__(name, maturity)
         self.udl = udl
         self.ivol = ivol
-        self.maturity = maturity
         self.strike = strike
         self.udl_for_exercice = udl if udl_for_exercice is None else udl_for_exercice
 
@@ -112,6 +110,9 @@ class VanillaCall(VanillaOption):
 
 if __name__ == "__main__":
 
-    fake_asset = OneUsd()
-    vp = VanillaPut(fake_asset, ImpliedVolConstant(0.2), Date(2019, 12, 31), 1.0)
-    print(vp.price(Date(2018, 12, 31)))
+    def test():
+        from assets.one_usd import OneUsd
+
+        fake_asset = OneUsd()
+        vp = VanillaPut(fake_asset, ImpliedVolConstant(0.2), Date(2019, 12, 31), 1.0)
+        print(vp.price(Date(2018, 12, 31)))

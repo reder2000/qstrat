@@ -4,7 +4,7 @@ from common import Date
 
 class OneUsd(Asset):
     def __init__(self):
-        super().__init__("ONE_USD")
+        super().__init__("ONE_USD", None)
 
     def price(self, t: Date) -> float:
         return 1.0

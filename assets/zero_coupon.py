@@ -8,9 +8,8 @@ from common import Date
 
 class ZeroCouponFake(Asset):
     def __init__(self, rate: float, maturity: Date, zname=""):
-        super().__init__(zname)
+        super().__init__(zname, maturity)
         self.rate = rate
-        self.maturity = maturity
 
     def price(self, t: Date) -> float:
         if t >= self.maturity:

@@ -7,7 +7,7 @@ from common import Date
 
 class EquityYFinance(Asset):
     def __init__(self, ticker):
-        super().__init__(ticker)
+        super().__init__(ticker, None)
         self.y = yfinance.Ticker(ticker)
         self.h = self.y.history(period="max")
 
@@ -20,7 +20,7 @@ class EquityYFinance(Asset):
 
 class IndexPandasSeries(Asset):
     def __init__(self, series: pandas.Series, name: str):
-        super().__init__(name)
+        super().__init__(name, series.index[-1])
         self.series = series
 
     def price(self, t: Date) -> float:
@@ -28,3 +28,7 @@ class IndexPandasSeries(Asset):
 
     def coupon(self, t: Date) -> float:
         return 0.0
+
+    @property
+    def index(self):
+        return self.series.index

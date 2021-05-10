@@ -38,7 +38,7 @@ def cboe_calendar_daycount(start_date, end_date, include_end_date=False):
     return i_e - i_s + (1 if include_end_date else 0)
 
 
-def next_spx_expiry(a_date: Date):
+def next_spx_monthly_expiry(a_date: Date):
     # 3d friday of each month
     y = a_date.year
     m = a_date.month
@@ -49,14 +49,14 @@ def next_spx_expiry(a_date: Date):
     else:
         d = 1 + 2 * 7 + (4 - dow)
     while not cboe_calendar_is_session(Date(y, m, d)):
-        d += 1
+        d -= 1
     res = Date(y, m, d)
     if res < a_date:
-        return next_spx_expiry(Date(y, m + 1, 1))
+        return next_spx_monthly_expiry(Date(y, m + 1, 1))
     return res
 
 
-def generate_n_spx_expiries(month: int, year: int, n: int, freq="Q"):
+def generate_n_spx_monthly_expiries(month: int, year: int, n: int, freq="Q"):
     res = []
     d = Date(year, month, 1)
     if freq == "Q":
@@ -66,7 +66,42 @@ def generate_n_spx_expiries(month: int, year: int, n: int, freq="Q"):
     else:
         assert False
     for i in range(n):
-        res.append(next_spx_expiry(d))
+        res.append(next_spx_monthly_expiry(d))
+        year += (month + dt - 1) // 12
+        month = (month + dt - 1) % 12 + 1
+        d = Date(year, month, 1)
+    return res
+
+
+def next_spx_weekly_expiry(a_date: Date):
+    # 3d friday of each month
+    y = a_date.year
+    m = a_date.month
+    # The day of the week with Monday=0, Sunday=6. (Friday=4)
+    dow = Date(a_date.year, m, 1).dayofweek
+    if dow > 4:
+        d = 1 + 3 * 7 + (4 - dow)
+    else:
+        d = 1 + 2 * 7 + (4 - dow)
+    while not cboe_calendar_is_session(Date(y, m, d)):
+        d -= 1
+    res = Date(y, m, d)
+    if res < a_date:
+        return next_spx_monthly_expiry(Date(y, m + 1, 1))
+    return res
+
+
+def generate_n_spx_weekly_expiries(month: int, year: int, n: int, freq="Q"):
+    res = []
+    d = Date(year, month, 1)
+    if freq == "Q":
+        dt = 3
+    elif freq == "M":
+        dt = 1
+    else:
+        assert False
+    for i in range(n):
+        res.append(next_spx_monthly_expiry(d))
         year += (month + dt - 1) // 12
         month = (month + dt - 1) % 12 + 1
         d = Date(year, month, 1)
@@ -76,7 +111,9 @@ def generate_n_spx_expiries(month: int, year: int, n: int, freq="Q"):
 # populate an option cube with flat vol expiries and strikes
 def generate_cube(start_date: Date, low_pct_range=0.85, up_pct_range=1.15):
     all_options: Dict[str, VanillaOption] = {}
-    all_expiries = pandas.DatetimeIndex(generate_n_spx_expiries(3, 2000, 23 * 4))
+    all_expiries = pandas.DatetimeIndex(
+        generate_n_spx_monthly_expiries(3, 2000, 23 * 4)
+    )
     if 0:
         spx_series = blp.bdh("SPX Index", ["PX_LAST"], pandas.Timestamp(2000, 1, 1))[
             "SPX Index"
@@ -117,7 +154,7 @@ def generate_cube(start_date: Date, low_pct_range=0.85, up_pct_range=1.15):
 
 
 if __name__ == "__main__":
-    next_spx_expiry(Date(2022, 5, 5))
-    next_spx_expiry(Date(2021, 5, 25))
-    generate_n_spx_expiries(1, 2021, 10)
+    next_spx_monthly_expiry(Date(2022, 5, 5))
+    next_spx_monthly_expiry(Date(2021, 5, 25))
+    generate_n_spx_monthly_expiries(1, 2021, 10)
     generate_cube(Date(2021, 4, 1), 0.85, 0.95)

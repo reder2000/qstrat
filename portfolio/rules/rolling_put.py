@@ -3,12 +3,10 @@ from copy import copy
 from typing import Tuple
 
 from assets.asset import Asset
-from assets.one_usd import OneUsd
 from common import Date, indexing_dict
-from portfolio.portfolio import Portfolio
 from portfolio.position import Position
 from portfolio.rule import Rule
-from pricer.option_cube import cboe_calendar_daycount, generate_cube
+from pricer.option_cube import cboe_calendar_daycount
 
 
 class RollingPut(Rule):
@@ -22,6 +20,10 @@ class RollingPut(Rule):
     def new_position(
         self, at_date: Date, pv: float, previous_position: Position
     ) -> Tuple[Position, float, float]:
+        # cut strat at < 20
+        if pv < 20:
+            shares = [0.0] * len(previous_position.shares)
+            return Position(self.assets, shares), 0.0, 0.0
         oc = self.option_cube[at_date]
         # find back spot
         spot = self.udl.price(at_date)
@@ -48,15 +50,3 @@ class RollingPut(Rule):
         put_index = self.assets_dict[put.name]
         shares[put_index] += put_notional
         return Position(self.assets, shares), 0.0, 0.0
-
-
-start_date = Date(2019, 1, 3)
-oc = generate_cube(start_date, 0.88, 0.92)
-udl = oc.iloc[0].iloc[1].iloc[0].udl
-udls = udl.series
-dates = udls.index[udls.index.get_loc(Date(2019, 1, 3)) : :]
-cash_asset = OneUsd()
-rule = RollingPut(udl, oc)
-portfolio = Portfolio(rule, cash_asset, 100.0, start_date)
-portfolio.compute(dates)
-portfolio.report().to_clipboard()
