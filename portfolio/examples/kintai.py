@@ -43,9 +43,15 @@
 # else : Forward(t-1) TWAP / FutSettle(t-1)
 
 # quantity mult  (for weeklys) = 2/5 * NAV_index_roll_day-1
+from common import Date
 
 
-class RollingPut(Rule):
+def selection_weeklies(at_date: Date, option_cube, calendar):
+    oc = option_cube[at_date]
+    expiry = oc.iloc[0]
+
+
+class KintaiPutW(Rule):
     def __init__(self, udl: Asset, option_cube):
         self.udl = udl
         # date X expiries X strikes options dataframe
