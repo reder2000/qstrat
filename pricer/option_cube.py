@@ -1,31 +1,71 @@
 # date X expiries X strikes options dataframe
 import math
 import warnings
-from typing import Dict
+from typing import Dict, TypeVar, Generic, List
 
 import pandas
 import trading_calendars
-from pandas import Timedelta
 from trading_calendars.exchange_calendar_xcbf import XCBFExchangeCalendar
-from xbbg import blp
 
+from assets.equity import IndexPandasSeries
 from assets.vanillas import (
     VanillaOption,
     vanilla_option_name,
     VanillaPut,
     ImpliedVolConstant,
 )
-from assets.equity import IndexPandasSeries
 from common import Date
 
+# from xbbg import blp
 
 warnings.simplefilter("ignore")
 
+# typing helper for option cube
+
+T = TypeVar('T')
+
+class FixedMaturityOptionHyperCube(Generic[T]):
+    # strikes index
+    @property
+    def iloc(self) -> List[T]:
+        pass
+    @property
+    def index(self) -> List[float]:
+        pass
+
+class FixedDateOptionHyperCube(Generic[T]):
+    # maturity index
+    @property
+    def iloc(self) -> List[FixedMaturityOptionHyperCube[T]]:
+        pass
+
+class OptionHyperCube(Generic[T]):
+    # timestamp index
+    @property
+    def iloc(self) -> List[FixedDateOptionHyperCube[T]]:
+        pass
+
+# fake option hypercube class for intellisense
+class CallPutOptionHyperCube(Generic[T]):
+    @property
+    def puts(self) -> OptionHyperCube[T] :
+        pass
+    @property
+    def calls(self) -> OptionHyperCube[T] :
+        pass
+
+# # check intellisense works
+# class FakeOption:
+#     @property
+#     def delta(self) -> float:
+#         return 0
+#
+# def f(cpohc:CallPutOptionHyperCube[FakeOption]):
+#     cpohc.calls.iloc[0].iloc[0].iloc[0].delta
 
 def cboe_calendar_is_session(a_date):
     assert a_date.date() < cboe_calendar_is_session.calendar.schedule.index[-1].date()
     return cboe_calendar_is_session.calendar.is_session(a_date)
-
 
 cboe_calendar_is_session.calendar = XCBFExchangeCalendar(
     end=trading_calendars.trading_calendar.end_base + pandas.Timedelta(days=3 * 365)
@@ -109,7 +149,7 @@ def generate_n_spx_weekly_expiries(month: int, year: int, n: int, freq="Q"):
 
 
 # populate an option cube with flat vol expiries and strikes
-def generate_cube(start_date: Date, low_pct_range=0.85, up_pct_range=1.15):
+def generate_cube(start_date: Date, low_pct_range=0.85, up_pct_range=1.15) -> OptionHyperCube[VanillaOption] :
     all_options: Dict[str, VanillaOption] = {}
     all_expiries = pandas.DatetimeIndex(
         generate_n_spx_monthly_expiries(3, 2000, 23 * 4)

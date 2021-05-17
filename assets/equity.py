@@ -1,5 +1,4 @@
 import pandas
-import yfinance
 
 from assets.asset import Asset
 from common import Date
@@ -7,8 +6,9 @@ from common import Date
 
 class EquityYFinance(Asset):
     def __init__(self, ticker):
+        from yfinance import Ticker
         super().__init__(ticker, None)
-        self.y = yfinance.Ticker(ticker)
+        self.y = Ticker(ticker)
         self.h = self.y.history(period="max")
 
     def price(self, t: Date) -> float:

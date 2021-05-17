@@ -1,12 +1,24 @@
 from math import log, sqrt, fabs, exp
 from statistics import NormalDist
 
+from scipy.optimize import brentq
+
 
 def NormCdf(x):
     return NormalDist().cdf(x)
 
 
 def BlsD1(S0, X, R, T, sig, Q):
+    if S0 == 0:
+        if X == 0:
+            return 20
+        else:
+            return -20
+    if X == 0:
+        return 20
+    if sig == 0:
+        sig = 1e-9
+
     return (log(S0 / X) + (R - Q + sig * sig / 2) * T) / (sig * sqrt(T))
 
 
@@ -18,6 +30,8 @@ def BlsD2(S0, X, R, T, sig, Q):
             return -20
     if X == 0:
         return 20
+    if sig == 0:
+        sig = 1e-9
 
     return (log(S0 / X) + (R - Q - sig * sig / 2) * T) / (sig * sqrt(T))
 
@@ -52,3 +66,24 @@ def BlsPriceC(S0, X, R, T, sig, Q):
         d2 = 20
     res = S0 * exp(-Q * T) * NormCdf(d1) - X * (exp(-R * T) * NormCdf(d2))
     return res
+
+def BlsImpliedVol(CallOrPut:str,S0,X,R,T,Q,price):
+    # return None = not found
+    BlsCheckParams(S0, X, R, T, 0.2, Q)
+    assert CallOrPut == "P" or  CallOrPut == "C"
+    fn = BlsPriceC if CallOrPut == "C" else BlsPriceP
+    f = lambda s : fn(S0,X,R,T,s,Q) - price
+    # scipy raises anyway in this case. What's the use of disp then ?
+    if f(0.)*f(10.) > 0:
+        return None
+    root,r = brentq(f,0.,10.,full_output=True,disp=False)
+    return root if r.converged else None
+
+if __name__ == "__main__":
+
+    def  te_ImpliedVol():
+        pr = BlsPriceC(1.,1.,0.,1.,0.2,0.)
+        print(BlsImpliedVol("C",1.,1.,0.,1.,0.,pr))
+        print(BlsImpliedVol("C", 1., 1., 0., 1., 0., 1000))
+
+    te_ImpliedVol()
